@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the article below (preferred citation) and this software."
+title: "Nuclear-hydrogen integration framework: hourly operation, ancillary services and lifecycle economics of nuclear plants with electrolysis"
+version: "1.0.0"
+repository-code: "https://github.com/Henryutd2021/nuclear-hydrogen-integration"
+license: MIT
+authors:
+  - family-names: Li
+    given-names: Honglin
+    orcid: "https://orcid.org/0000-0002-8405-3032"
+keywords:
+  - nuclear power
+  - hydrogen
+  - high-temperature electrolysis
+  - ancillary services
+  - techno-economic analysis
+  - mixed-integer programming
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Li
+      given-names: Honglin
+      orcid: "https://orcid.org/0000-0002-8405-3032"
+    - family-names: Huang
+      given-names: Jianqiao
+    - family-names: Poudel
+      given-names: Bikash
+    - family-names: Sun
+      given-names: Mucun
+    - family-names: Westover
+      given-names: Tyler
+    - family-names: Wendt
+      given-names: Daniel
+    - family-names: Zhang
+      given-names: Jie
+  title: "Rethinking the economics and flexibility of U.S. nuclear power through hydrogen integration and policy support"
+  journal: "Nature Communications"
+  volume: 17
+  start: 7090
+  year: 2026
+  doi: 10.1038/s41467-026-73630-y
+  url: "https://www.nature.com/articles/s41467-026-73630-y"
