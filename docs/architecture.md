@@ -7,6 +7,7 @@
 | `parameters` | dataclasses `Turbine`, `Electrolyzer`, `Battery`, `HydrogenStorage`, `Service`, `Market`, `Plant` with validation; units in field names |
 | `services` | ancillary-service product lists of the seven ISO/RTO markets (Supplementary Table 6) as `Service` sets |
 | `timeseries` | `TimeSeries` (energy price, AS prices, winning rates, deployment, mileage, performance) with validation; preparation helpers `to_hourly`, `drop_leap_day`, `fill_gaps`, `hourly_year`, `long_to_wide`, `scale_prices` |
+| `pjm` | `read_pjm_2024`: the article's 2024 PJM prices in `data/pjm/` (checksums, format checks), `PjmPrices` with flags of values that are not PJM records, interpolation of those values and `TimeSeries` assembly |
 | `synthetic` | invented series and parameters: energy prices, Eq. (56) capacity prices, deployment, mileage and performance generators; illustrative plant, TEA inputs and study design |
 | `model` | `build_model`: the MILP of Eqs. (1)–(46) in linopy |
 | `solve` | `solve` (HiGHS or Gurobi, solver metadata) and `optimize` (build, solve, account) |
@@ -21,6 +22,7 @@
 
 ```text
 public sources ──(data_pipeline.md)──► input directory ──read_inputs──► Plant, TimeSeries
+data/pjm/ (PJM 2024) ──read_pjm_2024──► PjmPrices ──timeseries──► TimeSeries
                                           │                                  │
                                           └─ tea.json ─read_tea─► TEAInputs, StudyDesign
                                                                              │
@@ -89,4 +91,5 @@ Harder price years, more breakpoints, more services or a sized hydrogen store ca
 - the model: a hand-computed case, business as usual by MILP equal to the closed form, balance and curve residuals of every solution, accounting equal to the solver objective, on/off logic (legal start-stop cycles accepted, short cycles refused, times in periods, initial state carried into the minimum times), ramp limits, sizing (a sized store holds its initial inventory), storage and battery rules, AS headroom in both modes including one-sided offers, Eq. (44) declared on either side, Eq. (46), energy-payment signs, mileage paid once per product, degradation, low-temperature electrolysis, HiGHS against Gurobi (when installed);
 - the TEA: cash flows by hand with tax, depreciation, construction years and payment offsets, the investment credit and basis reduction, credit timing and the second operation (same built capacities), replacements, fixed costs (also on sunk assets), levelized costs, fuel basis, case inputs and the case matrix;
 - input directories (time-zone-aware indices across daylight-saving changes, sub-second timestamps, series without services, nothing overwritten, failed writes leave nothing behind) and the command line;
-- parameter validation: fixed size or sizing range, required settings, finite mileage prices and energy signs.
+- parameter validation: fixed size or sizing range, required settings, finite mileage prices and energy signs;
+- the PJM data in `data/pjm/`: checksums (module, `SHA256SUMS` and README agree with the files), the exact 2024 hour labels, columns and units, the regulation price repeated in both directions, the flagged values, interpolation of only those values, refusal of modified or malformed copies (wrong year or minutes, a foreign hour, differing regulation prices), `TimeSeries` selection by rows or hour labels, an energy-only series, an input directory and optimizations (bid and dispatch modes) on PJM prices.

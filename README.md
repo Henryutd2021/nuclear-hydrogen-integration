@@ -40,12 +40,13 @@ The complete mathematics is in [docs/formulation.md](docs/formulation.md). Equat
 | Path | Content |
 |---|---|
 | [`docs/formulation.md`](docs/formulation.md) | sets, parameters and variables; Eqs. (1)–(56); conventions of this implementation; flexibility indicators; scope stated in the article |
-| [`docs/data_pipeline.md`](docs/data_pipeline.md) | how each input is built from public sources, the ISO data portals, the PJM note, preparation rules, generated ancillary-service series, input schemas, terms of use |
+| [`docs/data_pipeline.md`](docs/data_pipeline.md) | how each input is built from public sources, the ISO data portals, PJM market data (the included 2024 prices and how to prepare others), preparation rules, generated ancillary-service series, input schemas, terms of use |
 | [`docs/scenarios.md`](docs/scenarios.md) | the article's study design (fleet analysis, Cases 1–4, policy variants, sensitivity groups) and how to express it; reading the results |
 | [`docs/architecture.md`](docs/architecture.md) | modules, data flow, model structure, solvers, problem size, outputs, tests |
-| [`src/nuclear_h2/`](src/nuclear_h2/) | the implementation: parameters, ISO service sets, time series and preparation helpers, the MILP (linopy), solving, accounting and indicators, finance, TEA, scenario tools, command line |
-| [`examples/`](examples/) | `minimal.py`, `ancillary_services.py`, `lifecycle_tea.py`, `sensitivity.py`, `prepare_inputs.py` |
-| [`tests/`](tests/) | 154 tests: hand-computed operation and cash flows, balances recomputed from every solution, accounting against the solver objective, unit-commitment and storage rules, AS headroom and modes, credits, depreciation, levelized costs, input files, command line |
+| [`src/nuclear_h2/`](src/nuclear_h2/) | the implementation: parameters, ISO service sets, time series and preparation helpers, the PJM data loader, the MILP (linopy), solving, accounting and indicators, finance, TEA, scenario tools, command line |
+| [`data/pjm/`](data/pjm/) | the article's 2024 PJM price inputs (hourly energy prices and ancillary-service clearing prices), with their [README](data/pjm/README.md): source, units, hour labels, provenance, checksums and PJM's terms. Not covered by the repository's licences |
+| [`examples/`](examples/) | `minimal.py`, `ancillary_services.py`, `lifecycle_tea.py`, `sensitivity.py`, `prepare_inputs.py`, `pjm_2024.py` |
+| [`tests/`](tests/) | 181 tests: hand-computed operation and cash flows, balances recomputed from every solution, accounting against the solver objective, unit-commitment and storage rules, AS headroom and modes, credits, depreciation, levelized costs, input files, command line, the PJM data files |
 
 ## Quick start
 
@@ -55,6 +56,7 @@ cd nuclear-hydrogen-integration
 python3 -m venv .venv && source .venv/bin/activate    # needs Python 3.10+ (check: python3 --version); if older, use e.g. python3.12
 pip install -e ".[test]"
 python examples/minimal.py                              # business as usual vs the integrated system, two synthetic weeks, HiGHS
+python examples/pjm_2024.py                             # the article's 2024 PJM prices: summary and one week of operation
 pytest
 ```
 
@@ -90,7 +92,7 @@ print(table)                                           # NPV, IRR, payback, LCOE
 
 ## Using your own data
 
-1. **Market series.** Prepare hourly energy prices and ancillary-service clearing prices from the ISO's data portal, and the generated deployment, winning-rate and mileage series, as described in [docs/data_pipeline.md](docs/data_pipeline.md) (see `examples/prepare_inputs.py`). The format is validated when read.
+1. **Market series.** Prepare hourly energy prices and ancillary-service clearing prices from the ISO's data portal, and the generated deployment, winning-rate and mileage series, as described in [docs/data_pipeline.md](docs/data_pipeline.md) (see `examples/prepare_inputs.py`; for PJM in 2024, the article's prices are in `data/pjm/`, see `examples/pjm_2024.py`). The format is validated when read.
 2. **Plant and costs.** Put the plant's parameters in `parameters.json` and the TEA inputs in `tea.json`, in the units named by each field. The article lists the parameters it used in its Supplementary Tables 4–5 and its Methods.
 3. **Runs.** Run the operation and the case matrix, then the sensitivity studies ([docs/scenarios.md](docs/scenarios.md)). Check the balance residuals (`balance_residuals`) and record the solver and gap, and the settings and seeds of generated series, with the results.
 
@@ -98,19 +100,29 @@ A full-year instance is a mixed-integer program with tens of thousands of binari
 
 ## Market data and PJM
 
-This repository contains no market data. Market data come from each ISO's portal under that ISO's terms of use.
+Market data come from each ISO's portal under that ISO's terms of use. This repository includes one set of market data: **the article's 2024 PJM price inputs** in [`data/pjm/`](data/pjm/), unchanged (hourly energy prices, the mean of the LMP series of 21 PJM zones and of the PJM RTO, and the hourly clearing prices of PJM's regulation, primary, synchronized and thirty-minute reserves).
 
-**PJM market inputs need authorization from PJM.** PJM's energy and ancillary-service data are published through PJM Data Miner 2, whose terms state that the data are for internal use and that redistributing data contained in or derived from Data Miner is prohibited without an active PJM membership. PJM data are therefore not redistributed here: there are no PJM files, no files derived from them and no code that downloads them. A user with Data Miner 2 access under PJM's terms can prepare PJM inputs with the steps in [docs/data_pipeline.md](docs/data_pipeline.md#pjm-market-data) and should keep the prepared files and outputs that contain PJM-derived prices private unless PJM's terms allow otherwise.
+```python
+from nuclear_h2 import read_pjm_2024
+prices = read_pjm_2024("data/pjm")       # checks the files' SHA-256; prices.energy_price, prices.as_price
+```
+
+- **Source and terms.** The files are data of PJM Interconnection, L.L.C., published through PJM Data Miner 2. They are not covered by this repository's MIT or CC BY licences; PJM's terms of use apply, and PJM's Data Miner terms restrict redistribution by non-members. PJM provides its data as is, without warranty, and the files are provided here in the same way. Read [data/pjm/README.md](data/pjm/README.md) before reusing them.
+- **What to know.** Hours are labelled in Eastern Prevailing Time on a calendar of 365 days of 24 hours; the values of one hour (a daylight-saving clock hour, in both files) and of one day of ancillary-service prices (a day without reserve-market records) are not PJM records; the loader flags them and can interpolate them. Details, provenance and checksums: [data/pjm/README.md](data/pjm/README.md).
+- **Other years, locations or markets.** Prepare your own inputs with the steps in [docs/data_pipeline.md](docs/data_pipeline.md#pjm-market-data), under each data provider's terms. Keep files whose terms do not allow redistribution, and outputs that contain their prices, private.
 
 ## What this repository does not contain
 
-This repository presents the modelling framework. It does not contain the code, the input data or the results used for the article. For the article's results, see the article.
+This repository presents the modelling framework. Apart from the PJM price inputs in `data/pjm/`, it does not contain the code, the input data or the results used for the article. For the article's results, see the article.
 
 ## Citation
 
-If you use this framework, please cite the article above. Citation metadata for both the article and this software are in [`CITATION.cff`](CITATION.cff).
+If you use this framework, please cite the article above. Citation metadata for both the article and this software are in [`CITATION.cff`](CITATION.cff). If you use the PJM data in `data/pjm/`, also cite PJM as their source ([data/pjm/README.md](data/pjm/README.md#how-to-cite)).
+
+Changes between versions: [CHANGELOG.md](CHANGELOG.md).
 
 ## Licence
 
 - Code: [MIT](LICENSE).
-- Documentation (`README.md`, `docs/`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Documentation (`README.md`, `docs/`, `data/pjm/README.md`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- PJM data (`data/pjm/energy_price_2024.csv`, `data/pjm/as_price_2024.csv`): not licensed by this repository; PJM's terms of use apply ([data/pjm/README.md](data/pjm/README.md#terms-of-use-and-notices)).

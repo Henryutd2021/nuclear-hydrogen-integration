@@ -1,8 +1,9 @@
 # Data pipeline
 
 This page describes how to build the framework's inputs from public sources, the preparation rules, the input
-file schemas and the terms of use. The repository itself ships no market, plant or cost data: the examples and
-tests use invented series from `nuclear_h2.synthetic`.
+file schemas and the terms of use. The repository ships no plant or cost data and one set of market data, the
+article's 2024 PJM prices ([PJM market data](#pjm-market-data)); the other examples and tests use invented series from
+`nuclear_h2.synthetic`.
 
 ## Contents
 
@@ -60,18 +61,20 @@ A symmetric regulation product becomes an up and a down service on the same prod
 
 ## PJM market data
 
-**This repository contains no PJM data.** PJM's energy and ancillary-service market data are published through PJM Data Miner 2. PJM's Data Miner terms (Data Miner 2 page on pjm.com, checked on 2 November 2026) state that information and data contained in Data Miner are for internal use only and that redistribution of information or data contained in or derived from Data Miner is prohibited without an active PJM membership (a minimum of Associate Membership). PJM market inputs therefore need authorization from PJM under those terms; they are not redistributed here, and the repository contains no files derived from PJM data and no code that downloads them.
+**Included: the article's 2024 PJM prices.** [`data/pjm/`](../data/pjm/) holds the article's PJM price inputs, unchanged: hourly energy prices for 2024 (the mean of the LMP series of 21 PJM zones and of the PJM RTO) and the hourly clearing prices of PJM's regulation, primary reserve, synchronized reserve and thirty-minute reserve (PJM RTO, real-time Reserve Market Results). `read_pjm_2024` reads them, checks their SHA-256 and returns a `PjmPrices` object; `PjmPrices.timeseries(...)` turns a selection of hours into a `TimeSeries` for `iso_services("PJM")`, with winning rates and deployment factors that you supply (they are not part of the release; see [below](#generated-ancillary-service-series)). The CSV files are not part of the installed package: pass the path of `data/pjm` when you do not run from the repository. The files' README documents the source, units, hour labels (Eastern Prevailing Time on 365 days of 24 hours), the values that are not PJM records (flagged by the loader; `PjmPrices.interpolated()` replaces them), the provenance and the checksums.
 
-A user who has access to Data Miner 2 under PJM's terms can prepare PJM inputs as follows:
+**Terms.** The files are data of PJM Interconnection, L.L.C. They are not covered by this repository's MIT or CC BY licences. PJM's Data Miner terms (the Data Miner 2 page and PJM's Data Miner 2 terms of use on pjm.com, read on 7 November 2026) state that the data are for internal use and that redistribution of data contained in or derived from Data Miner is prohibited without an active PJM membership (a minimum of Associate Membership), and PJM provides the data as is, without warranty. Read [data/pjm/README.md](../data/pjm/README.md#terms-of-use-and-notices) before reusing or redistributing the files.
+
+**Other years or locations.** A user who has access to Data Miner 2 under PJM's terms can prepare further PJM inputs as follows:
 
 1. **Access.** Use your own PJM account for Data Miner 2 (interactive downloads or its application programming interface). Keep any key or credential outside the repository, for example in an environment variable read by your own download script; never commit it.
 2. **Download**, for the study year and in the market's local time:
-   - hourly locational marginal prices at the chosen hub or the plant's pricing node (day-ahead, or real-time aggregated to hourly);
-   - hourly ancillary-service market results with the clearing prices of the products in `iso_services("PJM")`: regulation, primary reserve, synchronized reserve and thirty-minute reserve;
-   - if the regulation mileage payment is used, the regulation mileage data for the same hours.
-3. **Convert** with the helpers of `nuclear_h2.timeseries`: `to_hourly` for sub-hourly records, `hourly_year` for one calendar year of 8760 hours (29 February dropped, gaps filled linearly), and `long_to_wide` with a mapping from PJM's product labels to the service product names (`Reg`, `Rse`, `Syn`, `TMR`).
+   - hourly locational marginal prices at the chosen hub, zone or the plant's pricing node (day-ahead, or real-time);
+   - ancillary-service market results with the clearing prices of the products in `iso_services("PJM")`: regulation, primary reserve, synchronized reserve and thirty-minute reserve;
+   - if the regulation mileage payment is used, the regulation mileage data for the same hours. PJM's regulation market clearing price combines a capability and a performance price; split it before adding a separate mileage payment, so the performance part is not paid twice.
+3. **Convert** with the helpers of `nuclear_h2.timeseries`: `to_hourly` for sub-hourly records, `hourly_year` for one calendar year of 8760 hours (29 February dropped, gaps filled linearly), and `long_to_wide` with a mapping from PJM's product labels to the service product names (`Reg`, `Rse`, `Syn`, `TMR`). The included 2024 files follow a different convention for the daylight-saving changes (clock labels; see their README).
 4. **Write** an input directory with `write_inputs` (or the CSV files of the [schema](#input-directory-schema)) in a location outside this repository, or in a folder listed in `.gitignore`.
-5. **Keep it internal.** Do not publish the prepared files, and check PJM's terms (or ask PJM) before sharing any file that contains or is derived from Data Miner data. This includes the framework's own outputs: `hourly.csv` carries the `energy_price` column.
+5. **Check the terms before sharing.** Check PJM's terms (or ask PJM) before you share any file that contains or is derived from Data Miner data. This includes the framework's own outputs: `hourly.csv` carries the `energy_price` column.
 
 The same steps apply to any market whose terms restrict redistribution.
 
@@ -125,7 +128,7 @@ Keep, next to each input directory (and outside any public repository if the dat
 
 ## Terms of use
 
-- **ISO and RTO market data:** each ISO's website terms apply; several restrict redistribution. PJM: see [above](#pjm-market-data).
+- **ISO and RTO market data:** each ISO's website terms apply; several restrict redistribution. PJM, including the 2024 prices in `data/pjm/`: see [above](#pjm-market-data) and [data/pjm/README.md](../data/pjm/README.md#terms-of-use-and-notices).
 - **U.S. NRC and U.S. EIA data:** U.S. government works; cite the agency and the dataset.
 - **NLR Annual Technology Baseline:** openly licensed; cite the ATB edition used.
 - **Cost literature and reports:** cite them; do not redistribute their files.

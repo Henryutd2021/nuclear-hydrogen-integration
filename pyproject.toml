@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nuclear-h2"
-version = "1.0.0"
+version = "1.1.0"
 description = "Hourly operation and sizing of nuclear plants integrated with electrolysis, hydrogen storage and batteries in energy and ancillary-service markets, linked to a lifecycle techno-economic analysis (framework of Li et al., Nature Communications 17, 7090, 2026)"
 readme = "README.md"
 license = {text = "MIT"}

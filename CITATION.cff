@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite the article below (preferred citation) and this software."
 title: "Nuclear-hydrogen integration framework: hourly operation, ancillary services and lifecycle economics of nuclear plants with electrolysis"
-version: "1.0.0"
+version: "1.1.0"
 repository-code: "https://github.com/Henryutd2021/nuclear-hydrogen-integration"
 license: MIT
 authors:
@@ -40,3 +40,11 @@ preferred-citation:
   year: 2026
   doi: 10.1038/s41467-026-73630-y
   url: "https://www.nature.com/articles/s41467-026-73630-y"
+references:
+  - type: data
+    title: "PJM Data Miner 2: zonal locational marginal prices and Reserve Market Results, 2024 (data/pjm/ of this repository)"
+    authors:
+      - name: "PJM Interconnection, L.L.C."
+    url: "https://dataminer2.pjm.com"
+    year: 2024
+    notes: "Not covered by this repository's licences; PJM's terms of use apply (data/pjm/README.md)."

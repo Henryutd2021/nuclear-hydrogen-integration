@@ -12,6 +12,7 @@ from .io import read_inputs, read_tea, write_inputs
 from .model import PlantModel, build_model
 from .parameters import (Battery, Electrolyzer, HydrogenStorage, Market, ParameterError, Plant, Service,
                          Turbine)
+from .pjm import PjmPrices, read_pjm_2024
 from .results import (Operation, as_revenue_by_service, balance_residuals, baseline_operation, baseline_plant,
                       flexibility_metrics, revenue_table)
 from .scenarios import (StudyDesign, case_matrix, electrolyzer_limit_sweep, operations, price_scenarios,
@@ -22,4 +23,4 @@ from .tea import (CapexItem, Credit45U, Credit48E, CreditPerUnit, Credits, Fixed
                   TEAResult, case_inputs, evaluate, results_table)
 from .timeseries import TimeSeries, drop_leap_day, fill_gaps, hourly_year, long_to_wide, scale_prices, to_hourly
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
